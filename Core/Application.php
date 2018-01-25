@@ -9,6 +9,7 @@
 namespace Core;
 
 
+use Core\ModelBinding\ModelBinderInterface;
 use Core\View\View;
 
 class Application
@@ -22,21 +23,24 @@ class Application
      */
     private $methodName;
     /**
-     * @var string[]
+     * @var []
      */
     private $params;
+    private $modelBinder;
 
     /**
      * Application constructor.
      * @param string $className
      * @param string $methodName
      * @param string[] $params
+     * @param ModelBinderInterface $modelBinder
      */
-    public function __construct(string $className, string $methodName, array $params)
+    public function __construct(string $className, string $methodName, array $params, ModelBinderInterface $modelBinder)
     {
         $this->className = ucfirst($className);
         $this->methodName = $methodName;
         $this->params = $params;
+        $this->modelBinder = $modelBinder;
     }
 
     public function start()
@@ -45,30 +49,24 @@ class Application
         $view = new View($this->className, $this->methodName);
 
         $controller = new $controllerName($view);
-        $actionInfo = new \ReflectionMethod($controller, $this->methodName);
-        echo "<pre>";
-        var_dump($actionInfo->getParameters());
+        $actionInfo = new \ReflectionMethod($controllerName, $this->methodName);
 
         $pos = -1;
+        $internalPos = 0;
+        $allParameters = [];
         foreach ($actionInfo->getParameters() as $parameter) {
             $pos++;
             $class = $parameter->getClass();
             if (null === $class) {
+                $allParameters[$pos] = $this->params[$internalPos];
+                $internalPos++;
                 continue;
             }
 
-            $bindingModel = new $class();
-            $bindingModelInfo = new \ReflectionClass($class);
-            foreach ($bindingModelInfo->getProperties() as $property) {
-                $fieldName = $property->getName();
-                if (!array_key_exists($fieldName, $_POST)) {
-                    continue;
-                }
-                $value = $_POST[$fieldName];
-                $setter ="set".ucfirst($fieldName);
+            $class = $class->getName();
+            $bindingModel = $this->modelBinder->bind($_POST, $class);
 
-                $bindingModel->$setter($value);
-            }
+            $allParameters[$pos] = $bindingModel;
 
         }
         //приема клас, метод и параметри
@@ -77,7 +75,7 @@ class Application
                 $controller,
                 $this->methodName
             ],
-            $this->params);
+            $allParameters);
     }
 
 }

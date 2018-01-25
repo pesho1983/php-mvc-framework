@@ -8,8 +8,8 @@ $uriTokens = explode("/", $actionPart);
 
 $className = array_shift($uriTokens);
 $methodName = array_shift($uriTokens);
-
-$app = new \Core\Application($className, $methodName, $uriTokens);
+$modelBinder = new \Core\ModelBinding\ModelBinder();
+$app = new \Core\Application($className, $methodName, $uriTokens, $modelBinder);
 
 $app->start();
 
