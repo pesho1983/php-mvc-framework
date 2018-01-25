@@ -13,7 +13,23 @@ class UserRegisterBindingModel
 {
     private $username;
     private $password;
+    private $confirmPassword;
 
+    /**
+     * @return mixed
+     */
+    public function getConfirmPassword()
+    {
+        return $this->confirmPassword;
+    }
+
+    /**
+     * @param mixed $confirmPassword
+     */
+    public function setConfirmPassword($confirmPassword): void
+    {
+        $this->confirmPassword = $confirmPassword;
+    }
 
     public function getUsername()
     {

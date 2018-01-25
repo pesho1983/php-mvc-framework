@@ -8,11 +8,11 @@
 
 namespace Controller;
 
-
 use Core\View\View;
 use Core\View\ViewInterface;
 use Model\BindingModels\UserRegisterBindingModel;
 use Model\UserDTO;
+use Service\User\UserServiceInterface;
 
 class UserController
 {
@@ -31,14 +31,10 @@ class UserController
         $this->view->render();
     }
 
-    public function registerProcess(UserRegisterBindingModel $bindingModel)
+    public function registerProcess(UserRegisterBindingModel $bindingModel,UserServiceInterface $userService)
     {
-        $user = $bindingModel->getUsername();
-        $password = $bindingModel->getPassword();
-        echo "<pre>";
-        var_dump("USER:", $user);
-        var_dump("Password:", $password);
-        exit;
+                $userService->register($bindingModel);
+                exit;
     }
 
     public function delete($name)

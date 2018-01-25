@@ -9,16 +9,18 @@
 namespace Core\View;
 
 
+use Core\Http\RequestInterface;
+
 class View implements ViewInterface
 {
-    private $className;
-    private $methodName;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
-
-    public function __construct($className, $methodName)
+    public function __construct(RequestInterface $request)
     {
-        $this->className = $className;
-        $this->methodName = $methodName;
+        $this->request = $request;
     }
 
 
@@ -26,7 +28,7 @@ class View implements ViewInterface
     {
         if ($viewName == null || is_object($viewName)) {
             $data = $viewName;
-            $viewName = $this->className . DIRECTORY_SEPARATOR . $this->methodName;
+            $viewName = $this->request->getClassName() . DIRECTORY_SEPARATOR . $this->request->getMethodName();
         }
         require_once "View/" . $viewName . ".php";
     }

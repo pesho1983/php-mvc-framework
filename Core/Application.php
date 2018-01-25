@@ -9,56 +9,49 @@
 namespace Core;
 
 
+use Core\Http\RequestInterface;
 use Core\ModelBinding\ModelBinderInterface;
 use Core\View\View;
 
 class Application
 {
     /**
-     * @var string
+     * @var RequestInterface
      */
-    private $className;
+    private $request;
     /**
-     * @var string
+     * @var ModelBinderInterface
      */
-    private $methodName;
-    /**
-     * @var []
-     */
-    private $params;
     private $modelBinder;
 
     /**
      * Application constructor.
-     * @param string $className
-     * @param string $methodName
-     * @param string[] $params
+     * @param RequestInterface $request
      * @param ModelBinderInterface $modelBinder
      */
-    public function __construct(string $className, string $methodName, array $params, ModelBinderInterface $modelBinder)
+    public function __construct(RequestInterface $request, ModelBinderInterface $modelBinder)
     {
-        $this->className = ucfirst($className);
-        $this->methodName = $methodName;
-        $this->params = $params;
+        $this->request = $request;
         $this->modelBinder = $modelBinder;
     }
 
     public function start()
     {
-        $controllerName = "Controller\\" . ucfirst($this->className) . "Controller";
-        $view = new View($this->className, $this->methodName);
+        $controllerName = "Controller\\" . ucfirst($this->request->getClassName()) . "Controller";
+        $view = new View($this->request);
 
         $controller = new $controllerName($view);
-        $actionInfo = new \ReflectionMethod($controllerName, $this->methodName);
+        $actionInfo = new \ReflectionMethod($controllerName, $this->request->getMethodName());
 
         $pos = -1;
         $internalPos = 0;
         $allParameters = [];
+        $requestParams = $this->request->getParams();
         foreach ($actionInfo->getParameters() as $parameter) {
             $pos++;
             $class = $parameter->getClass();
             if (null === $class) {
-                $allParameters[$pos] = $this->params[$internalPos];
+                $allParameters[$pos] = $requestParams[$internalPos];
                 $internalPos++;
                 continue;
             }
@@ -73,7 +66,7 @@ class Application
         call_user_func_array(
             [
                 $controller,
-                $this->methodName
+                $this->request->getMethodName()
             ],
             $allParameters);
     }
