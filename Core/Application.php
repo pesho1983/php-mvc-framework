@@ -8,12 +8,11 @@
 
 namespace Core;
 
-
+use Core\DependencyManagement\ContainerInterface;
 use Core\Http\RequestInterface;
 use Core\ModelBinding\ModelBinderInterface;
-use Core\View\View;
 
-class Application
+class Application implements ApplicationInterface
 {
     /**
      * @var RequestInterface
@@ -23,24 +22,31 @@ class Application
      * @var ModelBinderInterface
      */
     private $modelBinder;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
 
     /**
      * Application constructor.
      * @param RequestInterface $request
      * @param ModelBinderInterface $modelBinder
+     * @param ContainerInterface $container
      */
-    public function __construct(RequestInterface $request, ModelBinderInterface $modelBinder)
+    public function __construct(RequestInterface $request, ModelBinderInterface $modelBinder, ContainerInterface $container)
     {
         $this->request = $request;
         $this->modelBinder = $modelBinder;
+        $this->container = $container;
     }
+
 
     public function start()
     {
         $controllerName = "Controller\\" . ucfirst($this->request->getClassName()) . "Controller";
-        $view = new View($this->request);
 
-        $controller = new $controllerName($view);
+        $controller = $this->container->resolve($controllerName);
+
         $actionInfo = new \ReflectionMethod($controllerName, $this->request->getMethodName());
 
         $pos = -1;
@@ -57,9 +63,13 @@ class Application
             }
 
             $class = $class->getName();
-            $bindingModel = $this->modelBinder->bind($_POST, $class);
-
-            $allParameters[$pos] = $bindingModel;
+            $parameter = null;
+            if ($this->container->exists($class)) {
+                $parameter = $this->container->resolve($class);
+            } else {
+                $parameter = $this->modelBinder->bind($_POST, $class);
+            }
+            $allParameters[$pos] = $parameter;
 
         }
         //приема клас, метод и параметри
@@ -70,5 +80,6 @@ class Application
             ],
             $allParameters);
     }
+
 
 }

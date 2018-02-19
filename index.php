@@ -9,9 +9,28 @@ $uriTokens = explode("/", $actionPart);
 $className = array_shift($uriTokens);
 $methodName = array_shift($uriTokens);
 
-$request = new \Core\Http\Request($className,$methodName,$uriTokens,$_SERVER['QUERY_STRING']);
-$modelBinder = new \Core\ModelBinding\ModelBinder();
-$app = new \Core\Application($request, $modelBinder);
+//$modelBinder = new \Core\ModelBinding\ModelBinder();
+$request = new \Core\Http\Request($className, $methodName, $uriTokens, $_SERVER['QUERY_STRING']);
+
+$dbInfo = parse_ini_file('Config/db.ini');
+$db = new \Database\PDODatabase(new PDO($dbInfo['dsn'], $dbInfo['user'], $dbInfo['pass']));
+
+
+$container = new \Core\DependencyManagement\Container();
+$container->cache(\Core\DependencyManagement\ContainerInterface::class, $container);
+$container->cache(\Database\DatabaseInterface::class, $db);
+$container->cache(\Core\Http\RequestInterface::class, $request);
+
+$container->addDependency(\Core\View\ViewInterface::class, \Core\View\View::class);
+$container->addDependency(\Core\ModelBinding\ModelBinderInterface::class, \Core\ModelBinding\ModelBinder::class);
+$container->addDependency(\Repository\User\UserRepositoryInterface::class, \Repository\User\UserRepository::class);
+$container->addDependency(\Service\User\UserServiceInterface::class, \Service\User\UserService::class);
+
+
+$container->addDependency(\Service\Dummy\DummyServiceInterface::class, \Service\Dummy\DummyService::class);
+$container->addDependency(\Core\ApplicationInterface::class, \Core\Application::class);
+
+$app = $container->resolve(\Core\Application::class);
 
 $app->start();
 

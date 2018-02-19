@@ -30,6 +30,7 @@ class View implements ViewInterface
             $data = $viewName;
             $viewName = $this->request->getClassName() . DIRECTORY_SEPARATOR . $this->request->getMethodName();
         }
+        var_dump($viewName);
         require_once "View/" . $viewName . ".php";
     }
 }
